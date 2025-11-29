@@ -1,0 +1,66 @@
+import type { ChartData } from '@subbotnik/shared';
+
+export const salesData: Record<string, ChartData> = {
+  'sales-current-month': {
+    chartId: 'sales-current-month',
+    period: '2024-11',
+    data: [
+      { date: '2024-11-01', sales: 45000, orders: 120 },
+      { date: '2024-11-02', sales: 52000, orders: 135 },
+      { date: '2024-11-03', sales: 48000, orders: 128 },
+      { date: '2024-11-04', sales: 61000, orders: 155 },
+      { date: '2024-11-05', sales: 58000, orders: 148 },
+      { date: '2024-11-06', sales: 53000, orders: 142 },
+      { date: '2024-11-07', sales: 49000, orders: 131 },
+      { date: '2024-11-08', sales: 56000, orders: 145 },
+      { date: '2024-11-09', sales: 62000, orders: 159 },
+      { date: '2024-11-10', sales: 68000, orders: 180 },
+    ],
+    total: 552000,
+    avgDaily: 55200,
+  },
+  'sales-previous-month': {
+    chartId: 'sales-previous-month',
+    period: '2024-10',
+    data: [
+      { date: '2024-10-01', sales: 42000, orders: 115 },
+      { date: '2024-10-02', sales: 38000, orders: 102 },
+      { date: '2024-10-03', sales: 44000, orders: 118 },
+      { date: '2024-10-04', sales: 51000, orders: 138 },
+      { date: '2024-10-05', sales: 47000, orders: 125 },
+      { date: '2024-10-06', sales: 43000, orders: 116 },
+      { date: '2024-10-07', sales: 39000, orders: 108 },
+      { date: '2024-10-08', sales: 46000, orders: 122 },
+      { date: '2024-10-09', sales: 52000, orders: 141 },
+      { date: '2024-10-10', sales: 55000, orders: 149 },
+    ],
+    total: 457000,
+    avgDaily: 45700,
+  },
+  'revenue-by-category': {
+    chartId: 'revenue-by-category',
+    period: '2024-11',
+    data: [
+      { date: 'Электроника', sales: 185000, orders: 420 },
+      { date: 'Одежда', sales: 142000, orders: 680 },
+      { date: 'Продукты', sales: 98000, orders: 950 },
+      { date: 'Книги', sales: 67000, orders: 320 },
+      { date: 'Спорт', sales: 60000, orders: 240 },
+    ],
+    total: 552000,
+    avgDaily: 110400,
+  },
+  'top-products': {
+    chartId: 'top-products',
+    period: '2024-11',
+    data: [
+      { date: 'iPhone 15 Pro', sales: 95000, orders: 95 },
+      { date: 'MacBook Air M2', sales: 78000, orders: 65 },
+      { date: 'AirPods Pro', sales: 52000, orders: 260 },
+      { date: 'Apple Watch', sales: 48000, orders: 120 },
+      { date: 'iPad Air', sales: 42000, orders: 70 },
+    ],
+    total: 315000,
+    avgDaily: 63000,
+  },
+};

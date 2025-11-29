@@ -1,0 +1,23 @@
+.dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.dashboard-card {
+  flex-shrink: 0;
+  padding: 0 16px;
+}
+
+.dashboard-card h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dashboard-content {
+  overflow-x: auto;
+}
