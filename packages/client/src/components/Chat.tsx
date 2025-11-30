@@ -1,157 +1,236 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, TextInput, Button } from '@gravity-ui/uikit';
-import type {
-  ChatMessage as ApiChatMessage,
-  AssistantMessageWithTools,
-  ToolMessage,
-} from '@subbotnik/shared';
+import { useState } from 'react';
+import {
+  ChatContainer,
+  type TChatMessage,
+  type TUserMessage,
+  type TAssistantMessage,
+  type TSubmitData,
+  type ChatStatus,
+  type ToolMessageContent,
+  type TToolStatus,
+} from '@gravity-ui/aikit';
+import '@gravity-ui/aikit/styles';
+import { Icon } from '@gravity-ui/uikit';
+import { ChartColumn } from '@gravity-ui/icons';
+import type { ChatMessage as ApiChatMessage } from '@subbotnik/shared';
 import { sendMessage } from '../api/chat';
-import ChatMessage from './ChatMessage';
 import './Chat.css';
 
-// Клиентский тип сообщения с дополнительными полями для UI
-type ClientChatMessage = (ApiChatMessage | AssistantMessageWithTools | ToolMessage) & {
-  id: string;
-  streaming?: boolean;
-};
-
 function Chat() {
-  const [messages, setMessages] = useState<ClientChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<TChatMessage[]>([]);
+  const [status, setStatus] = useState<ChatStatus>('ready');
 
-  // Автопрокрутка вниз при добавлении сообщений
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const handleSendMessage = async (data: TSubmitData) => {
+    if (!data.content.trim()) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: ClientChatMessage = {
+    // Создаем user message в формате aikit
+    const userMessage: TUserMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: data.content,
+      timestamp: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    setStatus('streaming');
 
     try {
-      // Преобразуем клиентские сообщения в API формат (убираем id и streaming)
+      // Преобразуем aikit messages в API формат
       const apiMessages: ApiChatMessage[] = messages
         .concat(userMessage)
         .map((m) => {
-          const { id, streaming, ...rest } = m;
-          return rest as ApiChatMessage;
+          if (m.role === 'user') {
+            return {
+              role: 'user',
+              content: m.content,
+            };
+          } else {
+            // Для assistant messages нужно преобразовать content
+            const content = typeof m.content === 'string'
+              ? m.content
+              : Array.isArray(m.content)
+                ? m.content.find(c => typeof c !== 'string' && c.type === 'text')?.data?.text || ''
+                : typeof m.content === 'object' && m.content.type === 'text'
+                  ? m.content.data.text
+                  : '';
+            return {
+              role: 'assistant',
+              content,
+            };
+          }
         });
 
       let assistantMessageId = (Date.now() + 1).toString();
       let assistantContent = '';
+      let assistantMessage: TAssistantMessage | null = null;
 
       await sendMessage(apiMessages, (event) => {
         switch (event.type) {
           case 'function-call':
-            const assistantWithTools: ClientChatMessage = {
+            // Создаем assistant message с tool content
+            const toolContent: ToolMessageContent = {
+              type: 'tool',
+              data: {
+                toolName: event.data.name,
+                bodyContent: (
+                  <div>
+                    <div style={{ marginBottom: '8px' }}>
+                      📊 Параметры:
+                    </div>
+                    <pre style={{
+                      background: '#f5f5f5',
+                      padding: '8px',
+                      borderRadius: '4px',
+                      overflow: 'auto'
+                    }}>
+                      {JSON.stringify(event.data.arguments, null, 2)}
+                    </pre>
+                  </div>
+                ),
+                status: 'loading' as TToolStatus,
+                expandable: true,
+                initialExpanded: true,
+              },
+            };
+
+            assistantMessage = {
               id: Date.now().toString(),
               role: 'assistant',
-              content: '',
-              tool_calls: [
-                {
-                  id: event.data.id,
-                  type: 'function',
-                  function: {
-                    name: event.data.name,
-                    arguments: JSON.stringify(event.data.arguments),
-                  },
-                },
-              ],
+              content: [toolContent],
+              timestamp: new Date().toISOString(),
             };
-            setMessages((prev) => [...prev, assistantWithTools]);
+            setMessages((prev) => [...prev, assistantMessage!]);
             break;
 
           case 'function-result':
-            const toolMessage: ClientChatMessage = {
-              id: Date.now().toString(),
-              role: 'tool',
-              tool_call_id: event.data.tool_call_id,
-              content: JSON.stringify(event.data.result),
-            };
-            setMessages((prev) => [...prev, toolMessage]);
+            // Обновляем tool message со статусом success и результатом
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id === assistantMessage?.id && m.role === 'assistant') {
+                  const content = Array.isArray(m.content)
+                    ? m.content
+                    : typeof m.content === 'string'
+                      ? []
+                      : [m.content];
+
+                  const updatedContent = content.map((c) => {
+                    if (typeof c !== 'string' && c.type === 'tool') {
+                      return {
+                        ...c,
+                        data: {
+                          ...c.data,
+                          status: 'success' as TToolStatus,
+                          autoCollapseOnSuccess: true,
+                          footerContent: (
+                            <div>
+                              <div style={{ marginBottom: '8px', color: '#4CAF50' }}>
+                                ✅ Данные получены
+                              </div>
+                              <pre style={{
+                                background: '#f5f5f5',
+                                padding: '8px',
+                                borderRadius: '4px',
+                                overflow: 'auto',
+                                maxHeight: '200px'
+                              }}>
+                                {JSON.stringify(event.data.result, null, 2)}
+                              </pre>
+                            </div>
+                          ),
+                        },
+                      };
+                    }
+                    return c;
+                  });
+                  return { ...m, content: updatedContent };
+                }
+                return m;
+              })
+            );
             break;
 
           case 'message-delta':
             assistantContent += event.data;
             setMessages((prev) => {
               const existing = prev.find((m) => m.id === assistantMessageId);
+
               if (existing) {
                 return prev.map((m) =>
                   m.id === assistantMessageId
-                    ? { ...m, content: assistantContent, streaming: true }
+                    ? { ...m, content: assistantContent }
                     : m
                 );
               } else {
-                return [
-                  ...prev,
-                  {
-                    id: assistantMessageId,
-                    role: 'assistant' as const,
-                    content: assistantContent,
-                    streaming: true,
-                  },
-                ];
+                const newMessage: TAssistantMessage = {
+                  id: assistantMessageId,
+                  role: 'assistant',
+                  content: assistantContent,
+                  timestamp: new Date().toISOString(),
+                };
+                return [...prev, newMessage];
               }
             });
             break;
 
           case 'done':
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMessageId ? { ...m, streaming: false } : m
-              )
-            );
+            setStatus('ready');
             break;
 
           case 'error':
             console.error('Stream error:', event.data);
+            setStatus('error');
             break;
         }
       });
     } catch (error) {
       console.error('Chat error:', error);
-    } finally {
-      setIsLoading(false);
+      setStatus('error');
     }
   };
 
   return (
-    <Card className="chat">
-      <h2>AI Ассистент</h2>
-      <div className="chat-messages">
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
-        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-          <div className="loading">AI думает...</div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={handleSubmit} className="chat-input">
-        <TextInput
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Задайте вопрос о данных..."
-          size="l"
-          disabled={isLoading}
+    <div className="chatWrapper">
+      <div className="chat">
+        <ChatContainer
+          messages={messages}
+          status={status}
+          onSendMessage={handleSendMessage}
+          showHistory={false}
+          showNewChat={false}
+          showClose={false}
+          i18nConfig={{
+            promptInput: {
+              placeholder: 'Задайте вопрос о данных...',
+            },
+          }}
+          promptInputProps={{
+            view: 'simple',
+          }}
+          welcomeConfig={{
+            title: 'Добро пожаловать в AI BI Analyst',
+            description: 'Начните диалог, задав вопрос или выбрав один из предложенных вариантов.',
+            image: <Icon data={ChartColumn} size={48} />,
+            suggestionTitle: 'Попробуйте эти вопросы:',
+            suggestions: [
+              {
+                title: 'Покажи общую выручку по всем продуктам',
+              },
+              {
+                title: 'Какой продукт принес наибольшую прибыль?',
+              },
+              {
+                title: 'Сравни продажи разных категорий продуктов',
+              },
+              {
+                title: 'Покажи динамику продаж за последние месяцы',
+              },
+            ],
+            layout: 'grid',
+            wrapText: true,
+          }}
         />
-        <Button type="submit" size="l" view="action" disabled={isLoading}>
-          Отправить
-        </Button>
-      </form>
-    </Card>
+      </div>
+    </div>
   );
 }
 

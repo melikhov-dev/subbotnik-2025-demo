@@ -1,41 +1,59 @@
 .chat {
   height: 100%;
+  width: 500px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  background-color: #fafafa;
+
+  /* === Colors === */
+  --g-aikit-color-bg-primary: rgba(255, 255, 255, 0.95);
+  --g-aikit-color-bg-secondary: rgba(245, 245, 245, 0.9);
+
+  /* === Layout === */
+  --g-aikit-layout-base-padding-m: 16px;
+
+  /* === Messages === */
+  --g-aikit-color-bg-message-user: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --g-aikit-color-bg-message-assistant: rgba(255, 255, 255, 0.95);
+
+  /* === Disclaimer === */
+  --g-aikit-disclaimer-gap: 12px;
+
+  /* === Suggestions === */
+  --g-aikit-suggestions-box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+
+  /* === Header === */
+  --g-aikit-header-background: transparent;
+
+  /* === Empty Container === */
+  --g-aikit-empty-container-background: transparent;
+  --g-aikit-empty-container-content-gap: 48px;
+  --g-aikit-empty-container-padding: 48px 32px;
+
+  /* === Chat Content === */
+  --g-aikit-chat-content-background: rgba(255, 255, 255, 0.95);
+  --g-aikit-chat-content-padding: 0 var(--g-aikit-layout-base-padding-m) var(--g-spacing-4) var(--g-aikit-layout-base-padding-m);
+
+  /* === Prompt Input === */
+  --g-aikit-prompt-input-panel-max-height: 500px;
+
+  /* === Chat Container === */
+  --g-aikit-chat-container-header-background: transparent;
+  --g-aikit-chat-container-content-background: transparent;
+  --g-aikit-chat-container-footer-background: rgba(255, 255, 255, 0.95);
+  --g-aikit-chat-container-background: transparent;
+  --g-aikit-chat-container-content-empty-background: transparent;
+  --g-aikit-chat-container-content-chat-background: rgba(255, 255, 255, 0.95);
+  --g-aikit-chat-container-footer-empty-background: transparent;
+  --g-aikit-chat-container-footer-chat-background: rgba(255, 255, 255, 0.95);
 }
 
-.chat h2 {
-  margin-bottom: 16px;
-  font-size: 20px;
-  flex-shrink: 0;
-  padding: 0 8px;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  min-height: 0;
-}
-
-.chat-input {
+.chatWrapper {
+  height: 100%;
   display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.chat-input input {
-  flex: 1;
-}
-
-.loading {
-  text-align: center;
-  color: #666;
-  font-style: italic;
-  padding: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--g-spacing-4);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
