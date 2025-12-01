@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@gravity-ui/uikit": "^7.26.2",
+    "@gravity-ui/uikit": "^7.26.1",
     "@subbotnik/shared": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
